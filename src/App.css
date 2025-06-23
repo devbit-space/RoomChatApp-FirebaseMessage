@@ -1,0 +1,347 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f0f2f5;
+  color: #1c1e21;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f2f5;
+  padding: 20px;
+}
+
+/* Loading state */
+.app > div:first-child {
+  color: #1c1e21;
+  font-size: 1.2rem;
+  font-weight: 500;
+  text-align: center;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Remove old todo styles */
+.todo-container,
+.contents-section {
+  display: none;
+}
+
+/* Ensure proper font rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles for accessibility */
+button:focus,
+input:focus,
+textarea:focus {
+  outline: 2px solid rgba(102, 126, 234, 0.5);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar for the entire app */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  /* padding: 2rem; */
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* App-wide beautiful styles for Todo List */
+.todo-container {
+  background: #fff;
+  max-width: 500px;
+  /* margin: 40px auto 0 auto; */
+  padding: 1rem;
+  border-radius: 16px;
+  box-shadow: 0 6px 32px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.todo-container h1 {
+  font-size: 2.2rem;
+  color: #4a90e2;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+.todo-input-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.todo-input-row input {
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  width: 220px;
+  transition: border-color 0.2s;
+}
+
+.todo-input-row input:focus {
+  border-color: #4a90e2;
+  outline: none;
+}
+
+.todo-input-row button {
+  background: #4a90e2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.7rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.todo-input-row button:hover {
+  background: #357abd;
+}
+
+.todo-section {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.todo-section h2 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.todo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.todo-list li {
+  background: #f7faff;
+  border-radius: 7px;
+  margin-bottom: 0.7rem;
+  padding: 0.8rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(74,144,226,0.04);
+  transition: box-shadow 0.2s;
+}
+
+.todo-list li:hover {
+  box-shadow: 0 2px 8px rgba(74,144,226,0.10);
+}
+
+.todo-list .todo-text {
+  flex: 1;
+  color: #222;
+  font-size: 1.05rem;
+}
+
+.todo-list .todo-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.todo-list button {
+  background: #e0e7ef;
+  color: #4a90e2;
+  border: none;
+  border-radius: 5px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.todo-list button:hover {
+  background: #4a90e2;
+  color: #fff;
+}
+
+/* Completed section visually distinct */
+.todo-section.completed .todo-list li {
+  background: #e6f7e6;
+  color: #2e7d32;
+}
+
+.todo-section.completed h2 {
+  color: #2e7d32;
+}
+
+/* Modal styles */
+.edit-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-modal {
+  background: #fff;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+  min-width: 320px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.edit-modal h3 {
+  margin-bottom: 1rem;
+  color: #4a90e2;
+}
+
+.edit-modal input {
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-bottom: 1.2rem;
+  width: 100%;
+}
+
+.edit-modal .modal-actions {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.edit-modal button {
+  background: #4a90e2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.edit-modal button:hover {
+  background: #357abd;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .todo-container {
+    padding: 1.2rem 0.5rem;
+  }
+  .edit-modal {
+    min-width: 90vw;
+    padding: 1.2rem 0.5rem;
+  }
+}
+
+.logout-button {
+  background: #4a90e2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1.3rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  /* margin: 1.2rem 0 1.5rem 0; */
+  transition: background 0.2s;
+}
+
+.logout-button:hover {
+  background: #357abd;
+}
+
+.contents-section {
+  display: flex;
+  justify-content: space-around;
+  flex-direction: column;
+}
