@@ -79,10 +79,7 @@ textarea:focus {
 }
 
 #root {
-  max-width: 1280px;
   margin: 0 auto;
-  /* padding: 2rem; */
-  text-align: center;
 }
 
 .logo {
@@ -320,6 +317,9 @@ textarea:focus {
   .edit-modal {
     min-width: 90vw;
     padding: 1.2rem 0.5rem;
+  }
+  #root {
+    width: 100%;
   }
 }
 

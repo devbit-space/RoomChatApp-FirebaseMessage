@@ -108,4 +108,14 @@
 }
 .profile-info strong {
   color: #65676b;
+}
+
+@media (max-width: 480px) {
+  .settings-modal {
+    padding: 16px;
+  }
+
+  .settings-header h2 {
+    font-size: 1.25rem;
+  }
 } 
