@@ -212,9 +212,11 @@ main {
   border-radius: 18px;
   line-height: 1.4;
   word-wrap: break-word;
+  max-width: 300px;
 }
 .message-bubble p {
   margin: 0;
+  text-align: justify;
 }
 
 .message-wrapper.sent .message-bubble {
@@ -264,8 +266,6 @@ main {
 }
 
 .message-wrapper.sent .message-actions {
-  /* left: 100%; */
-  bottom: 20px;
 }
 .message-wrapper.received .message-actions {
   right: 100%;
