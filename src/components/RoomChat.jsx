@@ -42,6 +42,8 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [lastClickedMessageId, setLastClickedMessageId] = useState(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const didDrag = useRef(false);
   const dummy = useRef();
   const { user } = useSelector((state) => state.auth);
   const [newMessage, setNewMessage] = useState('');
@@ -70,6 +72,20 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
       dummy.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  useEffect(() => {
+    const handleMouseUp = () => {
+      if (isMouseDown) {
+        setIsMouseDown(false);
+        // Reset drag flag slightly after mouse up to prevent click event
+        setTimeout(() => {
+          didDrag.current = false;
+        }, 50);
+      }
+    };
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => window.removeEventListener('mouseup', handleMouseUp);
+  }, [isMouseDown]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -158,7 +174,26 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     onBackToRooms();
   };
 
+  const handleMouseDown = (e, message) => {
+    if (e.button !== 0) return; // Only for left click
+    setIsMouseDown(true);
+    
+    // If not shift-clicking, prepare for a potential drag or a new selection
+    if (!e.shiftKey) {
+       // Start selection on mouse down for the drag effect
+       setSelectedMessages(prev => [...new Set([...prev, message.id])]);
+    }
+  };
+
+  const handleMouseEnter = (message) => {
+    if (isMouseDown) {
+      didDrag.current = true;
+      setSelectedMessages(prev => [...new Set([...prev, message.id])]);
+    }
+  };
+
   const handleMessageClick = (e, message) => {
+    if (didDrag.current) return;
     if (editingMessage) return;
 
     const currentMessageId = message.id;
@@ -348,6 +383,8 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
                 <div
                   key={message.id}
                   className={`message-wrapper ${isSentByUser ? 'sent' : 'received'} ${isSelected ? 'selected' : ''}`}
+                  onMouseDown={(e) => handleMouseDown(e, message)}
+                  onMouseEnter={() => handleMouseEnter(message)}
                   onClick={(e) => !isEditing && handleMessageClick(e, message)}
                 >
                   <div className="message-avatar">
@@ -416,39 +453,34 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
         </div>
 
         {showMembers && (
-          <div className="members-sidebar">
-            <h3>Members ({selectedRoom.members?.length || 0})</h3>
-            <div className="members-list">
-              {selectedRoom.members?.map((member) => (
-                <div key={member.uid} className="member-item">
-                  <img src={member.photoURL || 'default-avatar.png'} alt={member.displayName} className="member-avatar" />
-                  <div className="member-info">
-                    <span className="member-name">{member.displayName || member.email}</span>
-                    <span className={`member-role ${member.role}`}>{member.role}</span>
-                  </div>
-                  {getUserRole() === 'admin' && member.uid !== user?.uid && (
-                    <div className="member-actions">
-                      <button 
-                        className="role-btn"
-                        onClick={() => {
-                          setSelectedMember(member);
-                          setShowRoleModal(true);
-                        }}
-                      >
-                        Change Role
-                      </button>
-                      {canKickUser(member) && (
-                        <button 
+          <div className="modal-overlay" onClick={() => setShowMembers(false)}>
+            <div className="members-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="members-header">
+                <h3>Room Members</h3>
+                <button onClick={() => setShowMembers(false)} className="close-modal-btn">×</button>
+              </div>
+              <div className="members-list">
+                {selectedRoom.members?.map((member) => (
+                  <div key={member.uid} className="member-item">
+                    <img src={member.photoURL || '/default-avatar.png'} alt={member.displayName} className="member-avatar" />
+                    <div className="member-info">
+                      <span className="member-name">{member.displayName || member.email}</span>
+                      <span className={`member-role ${member.role}`}>{member.role}</span>
+                    </div>
+                    {getUserRole() === 'admin' && member.uid !== user?.uid && (
+                      <div className="member-actions">
+                         <button
                           className="kick-btn"
                           onClick={() => deleteMember(member.uid)}
+                          title="Remove Member"
                         >
                           Kick
                         </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

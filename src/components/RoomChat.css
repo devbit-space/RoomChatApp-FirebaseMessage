@@ -212,7 +212,7 @@ main {
   border-radius: 18px;
   line-height: 1.4;
   word-wrap: break-word;
-  max-width: 300px;
+  max-width: 225px;
 }
 .message-bubble p {
   margin: 0;
@@ -364,12 +364,12 @@ main {
   width: 250px;
   background: #f8f9fa;
   border-left: 1px solid #e9ecef;
-  padding: 20px;
+  padding: 10px;
   overflow-y: auto;
 }
 
 .members-sidebar h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 10px 0;
   color: #333;
   font-size: 18px;
   font-weight: 600;
@@ -483,82 +483,55 @@ main {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(5px);
+  animation: fade-in 0.3s ease;
 }
 
-.role-modal {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 35px;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  max-width: 450px;
+.members-modal {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
   width: 90%;
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  max-width: 400px;
 }
 
-.role-modal h3 {
-  margin: 0 0 25px 0;
-  color: #2d3748;
-  text-align: center;
-  font-size: 1.3rem;
-  font-weight: 600;
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.role-options {
+.members-header {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 25px;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
 }
 
-.role-options button {
-  padding: 15px;
-  border: 2px solid rgba(102, 126, 234, 0.2);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.9);
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
+.members-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
 }
 
-.role-options button:hover {
-  border-color: rgba(102, 126, 234, 0.4);
-  background: rgba(102, 126, 234, 0.05);
-}
-
-.role-options button.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-color: #667eea;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.cancel-btn {
-  width: 100%;
-  padding: 15px;
-  background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
-  color: white;
+.close-modal-btn {
+  background: none;
   border: none;
-  border-radius: 12px;
+  font-size: 1.5rem;
   cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(113, 128, 150, 0.3);
+  color: #666;
 }
 
-.cancel-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(113, 128, 150, 0.4);
+.members-list {
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 /* Custom scrollbar for messages */
@@ -615,7 +588,11 @@ main::-webkit-scrollbar-thumb:hover {
   }
   
   .room-info h2 {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
+  }
+  
+  .room-info p {
+    font-size: 0.8rem;
   }
   
   .members-btn,
@@ -659,6 +636,19 @@ main::-webkit-scrollbar-thumb:hover {
   .chat-header-right {
     width: 100%;
     justify-content: center;
+  }
+  
+  .chat-header-left .back-btn span {
+    display: none;
+  }
+  
+  .chat-header-left {
+    gap: 8px;
+  }
+  
+  .chat-header .leave-btn, .chat-header .members-btn {
+    padding: 6px 8px;
+    font-size: 0.8rem;
   }
   
   .room-info h2 {
