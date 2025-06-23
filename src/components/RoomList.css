@@ -1,5 +1,5 @@
 .room-list {
-  width: 350px;
+  width: 100%;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-right: 1px solid rgba(255, 255, 255, 0.2);
@@ -220,6 +220,7 @@
 
 .delete-room-btn:hover {
   background-color: #d32f2f; /* Darker Red */
+  transform: translateY(-1px);
 }
 
 .delete-room-btn svg {

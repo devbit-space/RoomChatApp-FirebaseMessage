@@ -18,8 +18,6 @@ export default function Settings({ user, onClose }) {
       return;
     }
 
-    console.log('file ===>', file);
-    
     setIsUploading(true);
     setError('');
 
