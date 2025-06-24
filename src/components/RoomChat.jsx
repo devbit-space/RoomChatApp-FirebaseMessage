@@ -177,18 +177,23 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   const handleMouseDown = (e, message) => {
     if (e.button !== 0) return; // Only for left click
     setIsMouseDown(true);
-    
-    // If not shift-clicking, prepare for a potential drag or a new selection
-    if (!e.shiftKey) {
-       // Start selection on mouse down for the drag effect
-       setSelectedMessages(prev => [...new Set([...prev, message.id])]);
+    if(didDrag.current) {
+      setSelectedMessages(prev => [...new Set([...prev, message.id])]);
     }
   };
 
   const handleMouseEnter = (message) => {
     if (isMouseDown) {
       didDrag.current = true;
-      setSelectedMessages(prev => [...new Set([...prev, message.id])]);
+      setSelectedMessages(prev => {
+        if (prev.includes(message.id)) {
+          // If message is already selected, deselect it
+          return prev.filter(id => id !== message.id);
+        } else {
+          // If message is not selected, add it to selection
+          return [...prev, message.id];
+        }
+      });
     }
   };
 
@@ -388,7 +393,7 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
                   onClick={(e) => !isEditing && handleMessageClick(e, message)}
                 >
                   <div className="message-avatar">
-                    <img src={message.photoURL || '/default-avatar.png'} alt="avatar" />
+                    <img src={message.photoURL || 'https://cdn-icons-png.freepik.com/256/12318/12318446.png?semt=ais_hybrid'} alt="avatar" />
                   </div>
                   <div className="message-content">
                     <div className="message-header">
