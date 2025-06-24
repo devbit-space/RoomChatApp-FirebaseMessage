@@ -467,7 +467,7 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
               <div className="members-list">
                 {selectedRoom.members?.map((member) => (
                   <div key={member.uid} className="member-item">
-                    <img src={member.photoURL || '/default-avatar.png'} alt={member.displayName} className="member-avatar" />
+                    <img src={member.photoURL || 'https://cdn-icons-png.freepik.com/256/12318/12318446.png?semt=ais_hybrid'} alt={member.displayName} className="member-avatar" />
                     <div className="member-info">
                       <span className="member-name">{member.displayName || member.email}</span>
                       <span className={`member-role ${member.role}`}>{member.role}</span>
