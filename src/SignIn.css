@@ -8,17 +8,17 @@
 }
 
 .sign-in-box {
-  background: #ffffff;
+  background: var(--background-primary);
   padding: 40px;
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-heavy);
   width: 100%;
   max-width: 380px;
   display: flex;
   flex-direction: column;
   align-items: center;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-color);
 }
 
 .sign-in-box h2 {

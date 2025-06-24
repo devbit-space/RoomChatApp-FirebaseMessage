@@ -1,8 +1,8 @@
 .room-list {
   width: 100%;
   /* max-width: 400px; */
-  background: #ffffff;
-  border-right: 1px solid #e0e0e0;
+  background: var(--background-primary);
+  border-right: 1px solid var(--border-color);
   height: 100vh;
   overflow-y: auto;
   flex-shrink: 0;
@@ -10,11 +10,11 @@
 
 .room-list-header {
   padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ffffff;
+  background: var(--background-primary);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -22,7 +22,7 @@
 
 .room-list-header h2 {
   margin: 0;
-  color: #2c2c2c;
+  color: var(--text-primary);
   font-size: 20px;
   font-weight: 500;
 }

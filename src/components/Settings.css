@@ -13,14 +13,14 @@
 }
 
 .settings-modal {
-  background: #ffffff;
+  background: var(--background-primary);
   border-radius: 20px;
   padding: 0;
   max-width: 420px;
   width: 90%;
   max-height: 80vh;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-heavy);
   animation: slideUp 0.3s ease;
 }
 
@@ -89,7 +89,7 @@
 
 .settings-section h3 {
   margin: 0 0 16px 0;
-  color: #2c2c2c;
+  color: var(--text-primary);
   font-size: 16px;
   font-weight: 500;
 }
@@ -101,7 +101,7 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #2c2c2c;
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 500;
 }
@@ -110,11 +110,11 @@
 .form-group textarea {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #e1e5e9;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   font-size: 14px;
-  background: #ffffff;
-  color: #2c2c2c;
+  background: var(--background-primary);
+  color: var(--text-primary);
   transition: all 0.2s ease;
   outline: none;
   font-family: inherit;
@@ -290,6 +290,28 @@
 .upload-btn:hover {
   background: #e8eaed;
   transform: translateY(-1px);
+}
+
+.error-message {
+  color: #ff4444;
+  font-size: 13px;
+  text-align: center;
+  padding: 12px 16px;
+  background: rgba(255, 68, 68, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 68, 68, 0.2);
+  margin: 16px 0;
+}
+
+.success-message {
+  color: #00c851;
+  font-size: 13px;
+  text-align: center;
+  padding: 12px 16px;
+  background: rgba(0, 200, 81, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 200, 81, 0.2);
+  margin: 16px 0;
 }
 
 /* Custom scrollbar */

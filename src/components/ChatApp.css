@@ -4,7 +4,7 @@
   max-width: 1200px;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: var(--background-primary);
   border-radius: 0;
   box-shadow: none;
   overflow: hidden;
@@ -35,7 +35,7 @@
   display: flex;
   overflow: hidden;
   position: relative;
-  background: #ffffff;
+  background: var(--background-primary);
 }
 
 /* Loading state styles */
@@ -45,7 +45,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
+  background: var(--background-primary);
   gap: 20px;
 }
 
@@ -64,7 +64,7 @@
 }
 
 .loading-container p {
-  color: #8b8b8b;
+  color: var(--text-secondary);
   font-size: 16px;
   font-weight: 400;
   margin: 0;
@@ -78,9 +78,11 @@
   position: relative;
 }
 
+.theme-toggle-btn,
 .settings-btn {
   background: rgba(255, 255, 255, 0.15);
   border: none;
+  border-radius: 50%;
   width: 36px;
   height: 36px;
   display: flex;
@@ -92,6 +94,7 @@
   opacity: 0.8;
 }
 
+.theme-toggle-btn:hover,
 .settings-btn:hover {
   background: rgba(255, 255, 255, 0.25);
   opacity: 1;
@@ -100,21 +103,23 @@
 
 .logout-button {
   background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
   border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
+  color: #ffffff;
   transition: all 0.2s ease;
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 .logout-button:hover {
   background: rgba(255, 255, 255, 0.25);
   opacity: 1;
-  transform: translateY(-1px);
+  transform: scale(1.05);
 }
 
 /* Responsive design */

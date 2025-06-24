@@ -26,6 +26,7 @@ body {
 
 /* Loading state */
 .app > div:first-child {
+  width: 100%;
   color: #2c2c2c;
   font-size: 1.2rem;
   font-weight: 400;
