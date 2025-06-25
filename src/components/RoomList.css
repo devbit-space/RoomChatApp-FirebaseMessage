@@ -28,30 +28,38 @@
 }
 
 .create-room-btn {
-  background: #0088cc;
+  background: linear-gradient(135deg, var(--telegram-blue) 0%, var(--telegram-blue-dark) 100%);
   color: white;
   border: none;
-  padding: 10px 16px;
-  border-radius: 20px;
+  padding: 12px 18px;
+  border-radius: 25px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  box-shadow: 0 3px 12px rgba(0, 136, 204, 0.3);
+  letter-spacing: 0.3px;
 }
 
 .create-room-btn:hover {
-  background: #006ba6;
+  background: linear-gradient(135deg, var(--telegram-blue-dark) 0%, #005580 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4);
+}
+
+.create-room-btn:active {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+  box-shadow: 0 3px 12px rgba(0, 136, 204, 0.3);
+  transition: all 0.1s ease;
 }
 
 .create-room-form {
   padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
-  background: #f8f9fa;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--background-secondary);
 }
 
 .create-room-form input,
@@ -59,10 +67,11 @@
   width: 100%;
   padding: 12px 16px;
   margin-bottom: 12px;
-  border: 1px solid #e1e5e9;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   font-size: 14px;
-  background: #ffffff;
+  background: var(--background-primary);
+  color: var(--text-primary);
   transition: all 0.2s ease;
   resize: none;
   font-family: inherit;
@@ -71,7 +80,7 @@
 .create-room-form input:focus,
 .create-room-form textarea:focus {
   outline: none;
-  border-color: #0088cc;
+  border-color: var(--telegram-blue);
   box-shadow: 0 0 0 3px rgba(0, 136, 204, 0.1);
 }
 
@@ -82,21 +91,29 @@
 
 .create-room-form button {
   width: 100%;
-  background: #0088cc;
+  background: linear-gradient(135deg, var(--telegram-blue) 0%, var(--telegram-blue-dark) 100%);
   color: white;
   border: none;
-  padding: 12px;
-  border-radius: 12px;
+  padding: 14px;
+  border-radius: 15px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 3px 12px rgba(0, 136, 204, 0.25);
+  letter-spacing: 0.3px;
 }
 
 .create-room-form button:hover {
-  background: #006ba6;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+  background: linear-gradient(135deg, var(--telegram-blue-dark) 0%, #005580 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4);
+}
+
+.create-room-form button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 136, 204, 0.3);
+  transition: all 0.1s ease;
 }
 
 .rooms-container {
@@ -106,7 +123,7 @@
 .no-rooms-message {
   text-align: center;
   padding: 40px 20px;
-  color: #8b8b8b;
+  color: var(--text-secondary);
 }
 
 .no-rooms-message p {
@@ -118,13 +135,13 @@
 .no-rooms-message p:first-child {
   font-size: 16px;
   font-weight: 500;
-  color: #2c2c2c;
+  color: var(--text-primary);
 }
 
 .room-item {
-  background: #ffffff;
+  background: var(--background-primary);
   border: none;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
   padding: 16px 20px;
   margin: 0;
   cursor: pointer;
@@ -136,12 +153,12 @@
 }
 
 .room-item:hover {
-  background-color: #f8f9fa;
+  background-color: var(--background-secondary);
 }
 
 .room-item.selected {
-  background-color: #e3f2fd;
-  border-left: 4px solid #0088cc;
+  background-color: var(--telegram-blue-light);
+  border-left: 4px solid var(--telegram-blue);
 }
 
 .room-item:last-child {
@@ -155,7 +172,7 @@
 
 .room-info h3 {
   margin: 0 0 4px 0;
-  color: #2c2c2c;
+  color: var(--text-primary);
   font-size: 16px;
   font-weight: 500;
   white-space: nowrap;
@@ -165,7 +182,7 @@
 
 .room-info p {
   margin: 0 0 8px 0;
-  color: #8b8b8b;
+  color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.4;
   display: -webkit-box;
@@ -183,7 +200,7 @@
 
 .room-meta span {
   font-size: 12px;
-  color: #8b8b8b;
+  color: var(--text-secondary);
   font-weight: 400;
 }
 
@@ -207,7 +224,7 @@
 }
 
 .role-badge.member {
-  background: #8b8b8b;
+  background: var(--text-secondary);
   color: white;
 }
 
@@ -246,33 +263,37 @@
 
 .join-btn,
 .enter-btn {
-  padding: 6px 12px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 16px;
+  border-radius: 20px;
   cursor: pointer;
   font-size: 12px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .join-btn {
-  background: #0088cc;
+  background: linear-gradient(135deg, var(--telegram-blue) 0%, var(--telegram-blue-dark) 100%);
   color: white;
 }
 
 .join-btn:hover {
-  background: #006ba6;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--telegram-blue-dark) 0%, #005580 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
 }
 
 .enter-btn {
-  background: #f1f3f4;
-  color: #2c2c2c;
+  background: var(--background-secondary);
+  color: var(--text-primary);
 }
 
 .enter-btn:hover {
-  background: #e8eaed;
-  transform: translateY(-1px);
+  background: var(--background-tertiary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Custom scrollbar */
@@ -285,12 +306,12 @@
 }
 
 .room-list::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--border-color);
   border-radius: 3px;
 }
 
 .room-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--text-secondary);
 }
 
 /* Responsive design */

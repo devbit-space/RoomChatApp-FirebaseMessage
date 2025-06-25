@@ -148,35 +148,41 @@
 }
 
 .settings-btn {
-  padding: 10px 20px;
+  padding: 12px 24px;
   border: none;
-  border-radius: 12px;
+  border-radius: 15px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  min-width: 80px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 90px;
+  letter-spacing: 0.3px;
 }
 
 .settings-btn.primary {
-  background: #0088cc;
+  background: linear-gradient(135deg, var(--telegram-blue) 0%, var(--telegram-blue-dark) 100%);
   color: white;
+  box-shadow: 0 3px 12px rgba(0, 136, 204, 0.25);
 }
 
 .settings-btn.primary:hover {
-  background: #006ba6;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+  background: linear-gradient(135deg, var(--telegram-blue-dark) 0%, #005580 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4);
 }
 
 .settings-btn.secondary {
-  background: #f1f3f4;
-  color: #2c2c2c;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .settings-btn.secondary:hover {
-  background: #e8eaed;
-  transform: translateY(-1px);
+  background: var(--background-tertiary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--telegram-blue);
 }
 
 .theme-options {
@@ -220,16 +226,18 @@
 
 .toggle-switch {
   position: relative;
-  width: 48px;
-  height: 24px;
-  background: #e0e0e0;
-  border-radius: 12px;
+  width: 50px;
+  height: 26px;
+  background: var(--border-color);
+  border-radius: 13px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-switch.active {
-  background: #0088cc;
+  background: linear-gradient(135deg, var(--telegram-blue) 0%, var(--telegram-blue-dark) 100%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(0, 136, 204, 0.3);
 }
 
 .toggle-switch::after {
@@ -237,16 +245,17 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 20px;
-  height: 20px;
-  background: white;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(145deg, #ffffff, #f0f0f0);
   border-radius: 50%;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-switch.active::after {
   transform: translateX(24px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .avatar-upload {
@@ -276,20 +285,25 @@
 }
 
 .upload-btn {
-  background: #f1f3f4;
-  color: #2c2c2c;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 16px;
+  background: linear-gradient(135deg, var(--background-secondary), var(--background-tertiary));
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 10px 18px;
+  border-radius: 20px;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  letter-spacing: 0.2px;
 }
 
 .upload-btn:hover {
-  background: #e8eaed;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--telegram-blue), var(--telegram-blue-dark));
+  color: white;
+  border-color: var(--telegram-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
 }
 
 .error-message {
@@ -349,7 +363,8 @@
   
   .settings-actions {
     padding: 12px 20px;
-    flex-direction: column;
+    display: flex;
+    justify-content: space-around;
   }
   
   .settings-btn {
