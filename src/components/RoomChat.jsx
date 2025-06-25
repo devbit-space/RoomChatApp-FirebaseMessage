@@ -45,6 +45,7 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const didDrag = useRef(false);
   const dummy = useRef();
+  const messageInputRef = useRef();
   const { user } = useSelector((state) => state.auth);
   const [newMessage, setNewMessage] = useState('');
   const [isSelecting, setIsSelecting] = useState(false);
@@ -72,6 +73,16 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
       dummy.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  // Focus message input when room is selected
+  useEffect(() => {
+    if (selectedRoom && messageInputRef.current) {
+      // Small delay to ensure the component is fully rendered
+      setTimeout(() => {
+        messageInputRef.current.focus();
+      }, 100);
+    }
+  }, [selectedRoom]);
 
   useEffect(() => {
     const handleMouseUp = () => {
@@ -101,17 +112,18 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isSelectionMode]);
+  }, [isSelectionMode, selectedMessages]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!formValue.trim() || !selectedRoom) return;
+    const messageText = messageInputRef.current?.textContent?.trim() || '';
+    if (!messageText || !selectedRoom) return;
 
     const { uid, photoURL, displayName, email } = auth.currentUser;
     const userRole = getUserRole();
 
     await addDoc(collection(db, `rooms/${selectedRoom.id}/messages`), {
-      text: formValue.trim(),
+      text: messageText,
       createdAt: serverTimestamp(),
       uid,
       photoURL,
@@ -119,6 +131,11 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
       role: userRole
     });
 
+    // Clear the contentEditable div
+    if (messageInputRef.current) {
+      messageInputRef.current.textContent = '';
+      messageInputRef.current.innerHTML = '';
+    }
     setFormValue("");
     dummy.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -285,6 +302,18 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     }
   };
 
+  const handleMessageInputChange = () => {
+    const content = messageInputRef.current?.textContent || '';
+    setFormValue(content);
+  };
+
+  const handleMessageInputPaste = (e) => {
+    // Prevent pasting formatted text, only allow plain text
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
+  };
+
   const canManageMessage = (message) => {
     const userRole = getUserRole();
     if (userRole === 'admin' || userRole === 'moderator') {
@@ -444,15 +473,26 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
           </main>
 
           <form onSubmit={sendMessage} className="message-form">
-            <input
-              value={formValue}
-              onChange={(e) => setFormValue(e.target.value)}
-              onKeyDown={handleMessageInputKeyDown}
-              placeholder="Type a message..."
-              disabled={!selectedRoom}
-            />
-            <button type="submit" disabled={!formValue.trim() || !selectedRoom}>
-              Send
+            <div className="message-input-container">
+              <div
+                ref={messageInputRef}
+                contentEditable="true"
+                className="message-input"
+                data-placeholder="Type a message..."
+                onKeyDown={handleMessageInputKeyDown}
+                onInput={handleMessageInputChange}
+                onPaste={handleMessageInputPaste}
+                suppressContentEditableWarning={true}
+              />
+            </div>
+            <button 
+              type="submit" 
+              disabled={!formValue.trim() || !selectedRoom}
+              className="send-button"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
             </button>
           </form>
         </div>

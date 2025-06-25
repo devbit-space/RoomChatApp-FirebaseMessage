@@ -42,16 +42,27 @@
 
 .settings-header {
   padding: 20px 24px 16px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ffffff;
+  background: var(--background-primary);
+  position: relative;
+}
+
+.settings-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* background: linear-gradient(90deg, var(--telegram-blue) 0%, var(--telegram-blue-dark) 100%); */
+  border-radius: 20px 20px 0 0;
 }
 
 .settings-header h2 {
   margin: 0;
-  color: #2c2c2c;
+  color: var(--text-primary);
   font-size: 18px;
   font-weight: 500;
 }
@@ -59,18 +70,24 @@
 .close-settings-btn {
   background: transparent;
   border: none;
-  color: #8b8b8b;
+  color: var(--text-secondary);
   cursor: pointer;
-  padding: 4px;
+  padding: 8px;
   border-radius: 50%;
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1;
   transition: all 0.2s ease;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-settings-btn:hover {
-  background: #f0f0f0;
-  color: #2c2c2c;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  transform: scale(1.1);
 }
 
 .settings-content {
@@ -139,12 +156,24 @@
 }
 
 .settings-actions {
-  padding: 16px 24px;
-  border-top: 1px solid #e0e0e0;
+  padding: 20px 24px;
+  border-top: 1px solid var(--border-color);
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  background: #f8f9fa;
+  background: var(--background-secondary);
+  position: relative;
+}
+
+.settings-actions::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  /* background: linear-gradient(90deg, var(--telegram-blue) 0%, var(--telegram-blue-dark) 100%); */
+  border-radius: 0 0 20px 20px;
 }
 
 .settings-btn {
@@ -344,6 +373,53 @@
 
 .settings-content::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
+}
+
+/* Dark mode specific styles */
+[data-theme="dark"] .settings-modal {
+  background: var(--background-primary);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .settings-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .settings-header {
+  background: var(--background-primary);
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .settings-header::before {
+  /* background: linear-gradient(90deg, var(--telegram-blue) 0%, var(--telegram-blue-dark) 100%); */
+  box-shadow: 0 2px 8px rgba(0, 136, 204, 0.3);
+}
+
+[data-theme="dark"] .settings-actions {
+  background: var(--background-secondary);
+  border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .settings-actions::before {
+  /* background: linear-gradient(90deg, var(--telegram-blue) 0%, var(--telegram-blue-dark) 100%); */
+  box-shadow: 0 -2px 8px rgba(0, 136, 204, 0.3);
+}
+
+[data-theme="dark"] .close-settings-btn {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .close-settings-btn:hover {
+  background: var(--background-tertiary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .settings-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .settings-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Mobile responsive */

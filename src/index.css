@@ -24,16 +24,17 @@
 /* Dark theme */
 [data-theme="dark"] {
   --text-primary: #ffffff;
-  --text-secondary: #b0b0b0;
-  --background-primary: #1e1e1e;
-  --background-secondary: #2d2d2d;
-  --background-tertiary: #383838;
-  --border-color: #404040;
-  --border-light: #4a4a4a;
-  --telegram-blue-light: rgba(0, 136, 204, 0.2);
-  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --text-secondary: #a8aab0;
+  --text-tertiary: #6d7177;
+  --background-primary: #212121;
+  --background-secondary: #1e1e1e;
+  --background-tertiary: #2a2a2a;
+  --border-color: #2f2f2f;
+  --border-light: #373737;
+  --telegram-blue-light: rgba(0, 136, 204, 0.15);
+  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -75,6 +76,15 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
+}
+
+/* Dark mode scrollbar */
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 ::-webkit-scrollbar-corner {
