@@ -249,12 +249,14 @@ export default function Settings({ user, onClose }) {
           <button 
             className="settings-btn secondary" 
             onClick={onClose}
+            style={{ width: '100%' }}
           >
             Cancel
           </button>
           <button 
             className="settings-btn primary" 
             onClick={handleSave}
+            style={{ width: '100%' }}
           >
             Save
           </button>
