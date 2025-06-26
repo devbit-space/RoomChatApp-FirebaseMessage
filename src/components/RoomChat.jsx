@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useSelector } from 'react-redux';
+import { useTheme } from '../context/ThemeContext';
 import './RoomChat.css';
 import Settings from './Settings';
 
@@ -372,13 +373,6 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
 
   return (
     <div className="room-chat">
-      {isSelectionMode && (
-        <div className="selection-header">
-          <button onClick={cancelSelection} className="cancel-selection-btn">Cancel</button>
-          <span>{selectedMessages.length} selected</span>
-          <button onClick={deleteSelectedMessages} className="delete-selection-btn">Delete</button>
-        </div>
-      )}
       <div className="chat-header">
         <div className="chat-header-left">
           <button className="back-btn" onClick={onBackToRooms}>
@@ -472,6 +466,50 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
             <span ref={dummy}></span>
           </main>
 
+          {/* Message Status Bar - positioned above the input field */}
+          <div className="message-status-bar">
+            <div className="status-content">
+              {isSelectionMode ? (
+                <div className="selection-status">
+                  <span className="selection-count">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                    {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''} selected
+                  </span>
+                  <div className="selection-actions">
+                    <button onClick={cancelSelection} className="cancel-selection-btn-status">
+                      Cancel
+                    </button>
+                    <button onClick={deleteSelectedMessages} className="delete-selection-btn-status">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ) : formValue.trim() ? (
+                <span className="typing-indicator">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="4" cy="12" r="3">
+                      <animate attributeName="r" values="3;3;5;3;3" dur="1s" repeatCount="indefinite" begin="0s" />
+                    </circle>
+                    <circle cx="12" cy="12" r="3">
+                      <animate attributeName="r" values="3;3;5;3;3" dur="1s" repeatCount="indefinite" begin="0.2s" />
+                    </circle>
+                    <circle cx="20" cy="12" r="3">
+                      <animate attributeName="r" values="3;3;5;3;3" dur="1s" repeatCount="indefinite" begin="0.4s" />
+                    </circle>
+                  </svg>
+                  Typing...
+                </span>
+              ) : (
+                <span className="online-status">
+                  <div className="online-indicator"></div>
+                  {selectedRoom.members?.length || 0} members online
+                </span>
+              )}
+            </div>
+          </div>
+
           <form onSubmit={sendMessage} className="message-form">
             <div className="message-input-container">
               <div
@@ -510,7 +548,7 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
                     <img src={member.photoURL || 'https://cdn-icons-png.freepik.com/256/12318/12318446.png?semt=ais_hybrid'} alt={member.displayName} className="member-avatar" />
                     <div className="member-info">
                       <span className="member-name">{member.displayName || member.email}</span>
-                      <span className={`member-role ${member.role}`}>{member.role}</span>
+                      <span className={`member-role ${member.role}`}>{" [" + member.role + "]"}</span>
                     </div>
                     {getUserRole() === 'admin' && member.uid !== user?.uid && (
                       <div className="member-actions">
