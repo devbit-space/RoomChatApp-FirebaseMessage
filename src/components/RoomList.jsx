@@ -210,7 +210,7 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
                 key={room.id} 
                 className={`room-item ${isSelected ? 'selected' : ''}`}
               >
-                <div className="room-info" onClick={() => joinRoom(room)}>
+                <div className="room-info">
                   <h3>{room.name}</h3>
                   <p>{room.description}</p>
                   
