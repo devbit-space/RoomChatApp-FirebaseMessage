@@ -53,6 +53,8 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   const [showSettings, setShowSettings] = useState(false);
   const [editText, setEditText] = useState('');
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef(null);
 
   const isSelectionMode = selectedMessages.length > 0;
 
@@ -116,6 +118,15 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     };
   }, [isSelectionMode, selectedMessages]);
 
+  // Cleanup typing timeout on unmount or room change
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [selectedRoom]);
+
   const sendMessage = async (e) => {
     e.preventDefault();
     const messageText = messageInputRef.current?.textContent?.trim() || '';
@@ -139,6 +150,14 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
       messageInputRef.current.innerHTML = '';
     }
     setFormValue("");
+    
+    // Clear typing state and timeout when message is sent
+    setIsTyping(false);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    
     dummy.current?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -316,6 +335,26 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   const handleMessageInputChange = () => {
     const content = messageInputRef.current?.textContent || '';
     setFormValue(content);
+    
+    // Set typing to true when user starts typing
+    if (content.trim() && !isTyping) {
+      setIsTyping(true);
+    }
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Set typing to false after 1.5 seconds of inactivity
+    if (content.trim()) {
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsTyping(false);
+      }, 1500);
+    } else {
+      // If input is empty, immediately set typing to false
+      setIsTyping(false);
+    }
   };
 
   const handleMessageInputPaste = (e) => {
@@ -496,7 +535,7 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
                     </button>
                   </div>
                 </div>
-              ) : formValue.trim() ? (
+              ) : isTyping ? (
                 <span className="typing-indicator">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                     <circle cx="4" cy="12" r="3">
