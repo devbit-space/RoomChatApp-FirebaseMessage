@@ -284,6 +284,161 @@
   transform: scale(1.05);
 }
 
+/* Member Avatars Section */
+.room-members-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.member-avatars {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 28px;
+}
+
+.member-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--background-primary);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.member-avatar:not(:first-child) {
+  margin-left: -10px;
+}
+
+.member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.member-avatar .avatar-initials {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--telegram-blue) 0%, var(--telegram-blue-dark) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  transition: transform 0.3s ease;
+}
+
+.member-avatar.more-members {
+  background: linear-gradient(135deg, var(--text-secondary) 0%, #666 100%);
+  border-color: var(--background-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.member-avatar.more-members .more-count {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  background: inherit;
+  border-radius: 50%;
+}
+
+/* Hover Effects */
+.room-item:hover .member-avatar {
+  border-color: var(--telegram-blue);
+  transform: translateY(-2px) scale(1.1);
+  box-shadow: 0 4px 15px rgba(0, 136, 204, 0.25), 0 2px 8px rgba(0, 136, 204, 0.15);
+}
+
+.room-item:hover .member-avatar:not(:first-child) {
+  margin-left: -8px;
+}
+
+.room-item:hover .member-avatar img,
+.room-item:hover .member-avatar .avatar-initials {
+  transform: scale(1.05);
+}
+
+.room-item:hover .member-avatar.more-members {
+  background: linear-gradient(135deg, var(--telegram-blue) 0%, var(--telegram-blue-dark) 100%);
+  transform: translateY(-2px) scale(1.15);
+  box-shadow: 0 6px 20px rgba(0, 136, 204, 0.3), 0 3px 12px rgba(0, 136, 204, 0.2);
+}
+
+/* Responsive adjustments for member avatars */
+@media (max-width: 768px) {
+  .member-avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  .member-avatars {
+    height: 24px;
+  }
+
+  .member-avatar:not(:first-child) {
+    margin-left: -8px;
+  }
+
+  .room-item:hover .member-avatar:not(:first-child) {
+    margin-left: -6px;
+  }
+
+  .member-avatar .avatar-initials {
+    font-size: 10px;
+  }
+
+  .member-avatar.more-members .more-count {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .room-members-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .member-avatar {
+    width: 22px;
+    height: 22px;
+  }
+
+  .member-avatars {
+    height: 22px;
+  }
+
+  .member-avatar:not(:first-child) {
+    margin-left: -7px;
+  }
+
+  .room-item:hover .member-avatar:not(:first-child) {
+    margin-left: -5px;
+  }
+
+  .member-avatar .avatar-initials {
+    font-size: 9px;
+  }
+
+  .member-avatar.more-members .more-count {
+    font-size: 8px;
+  }
+}
+
 .role-badge {
   padding: 4px 10px;
   border-radius: 15px;
