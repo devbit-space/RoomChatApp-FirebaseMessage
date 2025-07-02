@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useTheme } from '../context/ThemeContext';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import RoomList from './RoomList';
 import RoomChat from './RoomChat';
 import Settings from './Settings';
@@ -16,29 +17,62 @@ export default function ChatApp() {
   const { user } = useSelector((state) => state.auth);
   const { toggleTheme, isDark } = useTheme();
 
-  // Load selected room from localStorage on component mount
+  // Enhanced session persistence - restore selected room on component mount
   useEffect(() => {
-    const savedRoomId = localStorage.getItem('selectedRoomId');
-    if (savedRoomId) {
-      // In a real app, you'd fetch the room data from DB
-      // For simplicity, we'll just wait for onSnapshot in RoomList
-      // This part is mostly for showing the loading state
+    const restoreSession = async () => {
+      const savedRoomId = localStorage.getItem('selectedRoomId');
+      if (savedRoomId) {
+        try {
+          // Fetch the room data from Firebase
+          const roomDoc = await getDoc(doc(db, 'rooms', savedRoomId));
+          if (roomDoc.exists()) {
+            const roomData = { id: roomDoc.id, ...roomDoc.data() };
+            // Check if user is still a member of the room
+            const isMember = roomData.members?.some(member => member.uid === user.uid);
+            if (isMember) {
+              setSelectedRoom(roomData);
+            } else {
+              // Remove invalid session
+              localStorage.removeItem('selectedRoomId');
+            }
+          } else {
+            // Room no longer exists
+            localStorage.removeItem('selectedRoomId');
+          }
+        } catch (error) {
+          console.error('Error restoring session:', error);
+          localStorage.removeItem('selectedRoomId');
+        }
+      }
+      setIsLoading(false);
+    };
+
+    if (user) {
+      restoreSession();
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, []);
+  }, [user]);
 
   const handleRoomSelect = (room) => {
     setSelectedRoom(room);
     if (room) {
       localStorage.setItem('selectedRoomId', room.id);
+      localStorage.setItem('selectedRoomData', JSON.stringify({
+        id: room.id,
+        name: room.name,
+        timestamp: Date.now()
+      }));
     } else {
       localStorage.removeItem('selectedRoomId');
+      localStorage.removeItem('selectedRoomData');
     }
   };
 
   const handleBackToRooms = () => {
     setSelectedRoom(null);
     localStorage.removeItem('selectedRoomId');
+    localStorage.removeItem('selectedRoomData');
   };
 
   // Show loading state while checking for saved room
@@ -48,6 +82,16 @@ export default function ChatApp() {
         <div className="chat-app-header">
           <h1>Room Chat App</h1>
           <div className="header-actions">
+            {/* User Avatar in Navbar */}
+            <div className="navbar-avatar">
+              {user?.photoURL ? (
+                <img src={user.photoURL} alt="Profile" />
+              ) : (
+                <div className="avatar-placeholder">
+                  {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                </div>
+              )}
+            </div>
             <button onClick={toggleTheme} className="theme-toggle-btn" title={isDark ? "Light Mode" : "Dark Mode"}>
               {isDark ? (
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
@@ -60,7 +104,7 @@ export default function ChatApp() {
               )}
             </button>
             <button onClick={() => setShowSettings(true)} className="settings-btn" title="Settings">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                 <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-1.57 1.996A1.532 1.532 0 013 7.482c-1.56.38-1.56 2.6 0 2.98a1.532 1.532 0 01.948 2.286c-.836 1.372.734 2.942 1.996 1.57a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.372.836 2.942-.734 1.57-1.996A1.532 1.532 0 0117 12.518c1.56-.38 1.56-2.6 0-2.98a1.532 1.532 0 01-.948-2.286c.836-1.372-.734-2.942-1.996-1.57a1.532 1.532 0 01-2.286-.948zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
               </svg>
             </button>
@@ -78,7 +122,7 @@ export default function ChatApp() {
         <div className="chat-app-content">
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <p>Loading your chat session...</p>
+            <p>Restoring your chat session...</p>
           </div>
         </div>
       </div>
@@ -102,19 +146,29 @@ export default function ChatApp() {
             )}
           </button>
           <button onClick={() => setShowSettings(true)} className="settings-btn" title="Settings">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
               <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-1.57 1.996A1.532 1.532 0 013 7.482c-1.56.38-1.56 2.6 0 2.98a1.532 1.532 0 01.948 2.286c-.836 1.372.734 2.942 1.996 1.57a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.372.836 2.942-.734 1.57-1.996A1.532 1.532 0 0117 12.518c1.56-.38 1.56-2.6 0-2.98a1.532 1.532 0 01-.948-2.286c.836-1.372-.734-2.942-1.996-1.57a1.532 1.532 0 01-2.286-.948zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
             </svg>
-                      </button>
-            <button 
-              className="profile-menu-btn" 
-              onClick={() => setShowProfileSlider(!showProfileSlider)}
-              title="Profile Menu"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path fillRule="evenodd" d="M3 6.75A.75.75 0 013.75 6h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 6.75zM3 12a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 12zm0 5.25a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75a.75.75 0 01-.75-.75z" clipRule="evenodd" />
-              </svg>
-            </button>
+          </button>
+          <button 
+            className="profile-menu-btn" 
+            onClick={() => setShowProfileSlider(!showProfileSlider)}
+            title="Profile Menu"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <path fillRule="evenodd" d="M3 6.75A.75.75 0 013.75 6h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 6.75zM3 12a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 12zm0 5.25a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75a.75.75 0 01-.75-.75z" clipRule="evenodd" />
+            </svg>
+          </button>
+          {/* User Avatar in Navbar */}
+          <div className="navbar-avatar" onClick={() => setShowProfileSlider(!showProfileSlider)} title="Profile">
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt="Profile" />
+            ) : (
+              <div className="avatar-placeholder">
+                {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       

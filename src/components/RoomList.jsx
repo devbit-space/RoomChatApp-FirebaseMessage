@@ -11,14 +11,73 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
   const [newRoomDescription, setNewRoomDescription] = useState('');
   const { user } = useSelector((state) => state.auth);
 
+  // Component to render member avatars
+  const MemberAvatars = ({ members = [], maxDisplay = 4 }) => {
+    const displayMembers = members.slice(0, maxDisplay);
+    const remainingCount = members.length - maxDisplay;
+
+    return (
+      <div className="member-avatars">
+        {displayMembers.map((member, index) => (
+          <div
+            key={member.uid}
+            className="member-avatar"
+            style={{ zIndex: maxDisplay - index }}
+            title={member.displayName || member.email}
+          >
+            {member.photoURL ? (
+              <img src={member.photoURL} alt={member.displayName || member.email} />
+            ) : (
+              <div className="avatar-initials">
+                {(member.displayName || member.email)?.charAt(0)?.toUpperCase()}
+              </div>
+            )}
+          </div>
+        ))}
+        {remainingCount > 0 && (
+          <div 
+            className="member-avatar more-members"
+            style={{ zIndex: 0 }}
+            title={`+${remainingCount} more members`}
+          >
+            <div className="more-count">+{remainingCount}</div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   useEffect(() => {
     const q = query(collection(db, 'rooms'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const roomsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setRooms(roomsData);
+
+      // Handle session persistence - auto-select saved room if not already selected
+      if (!selectedRoom) {
+        const savedRoomId = localStorage.getItem('selectedRoomId');
+        if (savedRoomId) {
+          const savedRoom = roomsData.find(room => room.id === savedRoomId);
+          if (savedRoom) {
+            // Check if user is still a member
+            const isMember = savedRoom.members?.some(member => member.uid === user.uid);
+            if (isMember) {
+              onRoomSelect(savedRoom);
+            } else {
+              // User is no longer a member, clear the saved room
+              localStorage.removeItem('selectedRoomId');
+              localStorage.removeItem('selectedRoomData');
+            }
+          } else {
+            // Room no longer exists, clear the saved room
+            localStorage.removeItem('selectedRoomId');
+            localStorage.removeItem('selectedRoomData');
+          }
+        }
+      }
     });
     return unsubscribe;
-  }, []);
+  }, [selectedRoom, onRoomSelect, user.uid]);
 
   const createRoom = async (e) => {
     e.preventDefault();
@@ -41,7 +100,8 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
     };
 
     const newRoomRef = await addDoc(collection(db, 'rooms'), roomData);
-    onRoomSelect({ id: newRoomRef.id, ...roomData });
+    const newRoom = { id: newRoomRef.id, ...roomData };
+    onRoomSelect(newRoom);
     setNewRoomName('');
     setNewRoomDescription('');
     setShowCreateForm(false);
@@ -69,7 +129,6 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
       
       if (selectedRoom?.id === roomId) {
         onRoomSelect(null);
-        localStorage.removeItem('selectedRoomId');
       }
     } catch (error) {
       console.error('Error deleting room:', error);
@@ -154,11 +213,16 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
                 <div className="room-info" onClick={() => joinRoom(room)}>
                   <h3>{room.name}</h3>
                   <p>{room.description}</p>
-                  <div className="room-meta">
-                    <span>{room.members?.length || 0} members</span>
-                    {userRole !== 'none' && (
-                      <span className={`role-badge ${userRole}`}>{userRole}</span>
-                    )}
+                  
+                  {/* Member Avatars */}
+                  <div className="room-members-section">
+                    <MemberAvatars members={room.members || []} />
+                    <div className="room-meta">
+                      <span>{room.members?.length || 0} members</span>
+                      {userRole !== 'none' && (
+                        <span className={`role-badge ${userRole}`}>{userRole}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="room-actions">
