@@ -52,6 +52,7 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   const [isSelecting, setIsSelecting] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [editText, setEditText] = useState('');
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const isSelectionMode = selectedMessages.length > 0;
 
@@ -184,12 +185,21 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     });
   };
 
-  const leaveRoom = async () => {
+  const handleLeaveRoom = () => {
+    setShowLeaveModal(true);
+  };
+
+  const confirmLeaveRoom = async () => {
     const updatedMembers = selectedRoom.members.filter(m => m.uid !== user.uid);
     await updateDoc(doc(db, 'rooms', selectedRoom.id), {
       members: updatedMembers
     });
+    setShowLeaveModal(false);
     onBackToRooms();
+  };
+
+  const cancelLeaveRoom = () => {
+    setShowLeaveModal(false);
   };
 
   const handleMouseDown = (e, message) => {
@@ -393,7 +403,7 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
           >
             Members ({selectedRoom.members?.length || 0})
           </button>
-          <button className="leave-btn" onClick={leaveRoom}>
+          <button className="leave-btn" onClick={handleLeaveRoom}>
             Leave Room
           </button>
         </div>
@@ -602,6 +612,28 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {showLeaveModal && (
+        <div className="modal-overlay" onClick={cancelLeaveRoom}>
+          <div className="leave-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Leave Room</h3>
+            </div>
+            <div className="modal-content">
+              <p>Are you sure you want to leave "{selectedRoom?.name}"?</p>
+              <p>You'll need to rejoin to participate in this room again.</p>
+            </div>
+            <div className="modal-actions">
+              <button className="cancel-btn" onClick={cancelLeaveRoom}>
+                Cancel
+              </button>
+              <button className="leave-confirm-btn" onClick={confirmLeaveRoom}>
+                Leave Room
+              </button>
+            </div>
           </div>
         </div>
       )}
