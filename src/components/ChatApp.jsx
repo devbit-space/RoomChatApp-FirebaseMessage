@@ -107,7 +107,7 @@ export default function ChatApp() {
     return (
       <div className="chat-app">
         <div className="chat-app-header">
-          <h1>free rooms</h1>
+          <h1>FreeRooms</h1>
           <div className="header-actions">
             {/* User Avatar in Navbar */}
             <div className="navbar-avatar">
@@ -159,7 +159,7 @@ export default function ChatApp() {
   return (
     <div className="chat-app">
       <div className="chat-app-header">
-        <h1 onClick={handleBackToRooms} style={{ cursor: 'pointer' }}>free rooms</h1>
+        <h1 onClick={handleBackToRooms} style={{ cursor: 'pointer' }}>FreeRooms</h1>
         <div className="header-actions">
           <button onClick={toggleTheme} className="theme-toggle-btn" title={isDark ? "Light Mode" : "Dark Mode"}>
             {isDark ? (
