@@ -152,7 +152,12 @@ export default function Settings({ user, onClose }) {
                   disabled={isUploading}
                 />
                 <label htmlFor="avatarUpload" className={`upload-btn ${isUploading ? 'uploading' : ''}`}>
-                  {isUploading ? 'Uploading...' : 'Upload Photo'}
+                  {isUploading ? (
+                    <>
+                      <div className="upload-loading-spinner"></div>
+                      Uploading...
+                    </>
+                  ) : 'Upload Photo'}
                 </label>
                 <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>or enter URL below</span>
               </div>

@@ -325,14 +325,73 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 120px;
+  position: relative;
+  overflow: hidden;
 }
 
-.upload-btn:hover {
+.upload-btn:hover:not(.uploading) {
   background: linear-gradient(135deg, var(--telegram-blue), var(--telegram-blue-dark));
   color: white;
   border-color: var(--telegram-blue);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+}
+
+.upload-btn.uploading {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+  cursor: not-allowed;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  animation: uploadPulse 2s ease-in-out infinite;
+}
+
+.upload-btn.uploading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: uploadShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes uploadPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes uploadShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.upload-loading-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: uploadSpin 1s linear infinite;
+}
+
+@keyframes uploadSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .error-message {

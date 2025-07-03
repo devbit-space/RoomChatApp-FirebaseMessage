@@ -58,6 +58,31 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
 
   const isSelectionMode = selectedMessages.length > 0;
 
+  // Function to mark room as read
+  const markRoomAsRead = async () => {
+    if (!selectedRoom || !user) return;
+    
+    try {
+      const roomRef = doc(db, 'rooms', selectedRoom.id);
+      const roomDoc = await getDoc(roomRef);
+      
+      if (roomDoc.exists()) {
+        const roomData = roomDoc.data();
+        const updatedMembers = roomData.members.map(member => 
+          member.uid === user.uid 
+            ? { ...member, lastReadTimestamp: new Date() }
+            : member
+        );
+
+        await updateDoc(roomRef, {
+          members: updatedMembers
+        });
+      }
+    } catch (error) {
+      console.error('Error marking room as read:', error);
+    }
+  };
+
   useEffect(() => {
     if (!selectedRoom) return;
 
@@ -68,8 +93,20 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setMessages(msgs);
+      
+      // Mark room as read when messages are loaded or updated
+      if (msgs.length > 0) {
+        markRoomAsRead();
+      }
     });
     return unsubscribe;
+  }, [selectedRoom]);
+
+  // Also mark as read when room is first selected
+  useEffect(() => {
+    if (selectedRoom) {
+      markRoomAsRead();
+    }
   }, [selectedRoom]);
 
   useEffect(() => {
@@ -104,19 +141,27 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isSelectionMode) {
+      if (e.key === 'Escape') {
         e.preventDefault();
-        cancelSelection();
+        if (isSelectionMode) {
+          cancelSelection();
+        } else {
+          // If no messages are selected, go back to rooms list
+          onBackToRooms();
+        }
       } else if (e.key === 'Delete' && isSelectionMode) {
         e.preventDefault();
         deleteSelectedMessages();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'c' && isSelectionMode) {
+        e.preventDefault();
+        copySelectedMessages();
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isSelectionMode, selectedMessages]);
+  }, [isSelectionMode, selectedMessages, onBackToRooms, messages]);
 
   // Cleanup typing timeout on unmount or room change
   useEffect(() => {
@@ -232,6 +277,16 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   const handleMouseEnter = (message) => {
     if (isMouseDown) {
       didDrag.current = true;
+      
+      // Only allow selection if user is admin or it's their own message
+      const userRole = getUserRole();
+      const isAdmin = userRole === 'admin';
+      const isOwnMessage = message.uid === user.uid;
+      
+      if (!isAdmin && !isOwnMessage) {
+        return; // Don't allow selection of other users' messages if not admin
+      }
+      
       setSelectedMessages(prev => {
         if (prev.includes(message.id)) {
           // If message is already selected, deselect it
@@ -249,6 +304,15 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     if (editingMessage) return;
 
     const currentMessageId = message.id;
+    
+    // Only allow selection if user is admin or it's their own message
+    const userRole = getUserRole();
+    const isAdmin = userRole === 'admin';
+    const isOwnMessage = message.uid === user.uid;
+    
+    if (!isAdmin && !isOwnMessage) {
+      return; // Don't allow selection of other users' messages if not admin
+    }
 
     if (e.shiftKey && lastClickedMessageId) {
       const lastIndex = messages.findIndex(m => m.id === lastClickedMessageId);
@@ -257,9 +321,14 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
       if (lastIndex !== -1 && currentIndex !== -1) {
         const start = Math.min(lastIndex, currentIndex);
         const end = Math.max(lastIndex, currentIndex);
-        const rangeIds = messages.slice(start, end + 1).map(m => m.id);
+        const rangeMessages = messages.slice(start, end + 1);
+        
+        // Filter range to only include messages user can select
+        const selectableRangeIds = rangeMessages
+          .filter(msg => isAdmin || msg.uid === user.uid)
+          .map(msg => msg.id);
 
-        const newSelectedMessages = new Set([...selectedMessages, ...rangeIds]);
+        const newSelectedMessages = new Set([...selectedMessages, ...selectableRangeIds]);
         setSelectedMessages(Array.from(newSelectedMessages));
         return; 
       }
@@ -281,16 +350,178 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   
   const deleteSelectedMessages = async () => {
     const batch = writeBatch(db);
+    const userRole = getUserRole();
+    const isAdmin = userRole === 'admin';
+    
+    // Delete messages based on permissions
     selectedMessages.forEach(id => {
-      const messageRef = doc(db, `rooms/${selectedRoom.id}/messages`, id);
-      batch.delete(messageRef);
+      const message = messages.find(m => m.id === id);
+      if (message && canDeleteMessage(message)) {
+        const messageRef = doc(db, `rooms/${selectedRoom.id}/messages`, id);
+        batch.delete(messageRef);
+      }
     });
     await batch.commit();
     setSelectedMessages([]);
   };
 
+  const copySelectedMessages = async () => {
+    if (selectedMessages.length === 0) return;
+
+    try {
+      // Get selected messages in chronological order
+      const selectedMessagesData = selectedMessages
+        .map(id => messages.find(m => m.id === id))
+        .filter(msg => msg) // Remove any undefined messages
+        .sort((a, b) => {
+          // Sort by creation time
+          if (!a.createdAt || !b.createdAt) return 0;
+          return a.createdAt.toDate() - b.createdAt.toDate();
+        });
+
+      let clipboardText;
+      
+      if (selectedMessages.length === 1) {
+        // For single message, copy only the message content
+        clipboardText = selectedMessagesData[0]?.text || '';
+      } else {
+        // For multiple messages, use formatted version
+        clipboardText = selectedMessagesData
+          .map(message => {
+            const timestamp = message.createdAt ? formatTimestamp(message.createdAt) : '';
+            const author = message.displayName || 'Unknown';
+            const text = message.text || '';
+            
+            // Format: [Time] Author: Message
+            return `[${timestamp}] ${author}: ${text}`;
+          })
+          .join('\n');
+      }
+
+      // Copy to clipboard
+      await navigator.clipboard.writeText(clipboardText);
+      
+      // Show beautiful success notification
+      showCopyNotification(selectedMessages.length);
+      
+    } catch (error) {
+      console.error('Failed to copy messages to clipboard:', error);
+      
+      // Fallback for older browsers
+      try {
+        const selectedMessagesData = selectedMessages
+          .map(id => messages.find(m => m.id === id))
+          .filter(msg => msg)
+          .sort((a, b) => {
+            if (!a.createdAt || !b.createdAt) return 0;
+            return a.createdAt.toDate() - b.createdAt.toDate();
+          });
+
+        let clipboardText;
+        
+        if (selectedMessages.length === 1) {
+          clipboardText = selectedMessagesData[0]?.text || '';
+        } else {
+          clipboardText = selectedMessagesData
+            .map(message => {
+              const timestamp = message.createdAt ? formatTimestamp(message.createdAt) : '';
+              const author = message.displayName || 'Unknown';
+              const text = message.text || '';
+              return `[${timestamp}] ${author}: ${text}`;
+            })
+            .join('\n');
+        }
+
+        // Create a temporary textarea element for fallback
+        const textArea = document.createElement('textarea');
+        textArea.value = clipboardText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        // Show beautiful success notification
+        showCopyNotification(selectedMessages.length);
+      } catch (fallbackError) {
+        console.error('Clipboard fallback also failed:', fallbackError);
+        showCopyNotification(0, true); // Show error notification
+      }
+    }
+  };
+
+  const showCopyNotification = (messageCount, isError = false) => {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `copy-notification ${isError ? 'error' : 'success'}`;
+    
+    if (isError) {
+      notification.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        <span>Failed to copy messages</span>
+      `;
+    } else {
+      notification.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </svg>
+        <span>${messageCount === 1 ? 'Message copied!' : `${messageCount} messages copied!`}</span>
+      `;
+    }
+    
+    // Add styles
+    Object.assign(notification.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      backgroundColor: isError ? '#ff4757' : '#2ed573',
+      color: 'white',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontSize: '14px',
+      fontWeight: '500',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      zIndex: '10000',
+      transform: 'translateX(100%)',
+      transition: 'transform 0.3s ease',
+      maxWidth: '300px'
+    });
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    requestAnimationFrame(() => {
+      notification.style.transform = 'translateX(0)';
+    });
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
+  };
+
   const handleEditClick = (e, message) => {
     e.stopPropagation();
+    
+    // Check if user can manage this message
+    if (!canManageMessage(message)) {
+      alert('You can only edit your own messages.');
+      return;
+    }
+    
     setEditingMessage(message);
     setEditText(message.text);
   };
@@ -325,6 +556,18 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     }
   };
 
+  const handleEditInputChange = (e) => {
+    const content = e.target.textContent || '';
+    setEditText(content);
+  };
+
+  const handleEditInputPaste = (e) => {
+    // Prevent pasting formatted text, only allow plain text
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
+  };
+
   const handleMessageInputKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -346,11 +589,11 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
       clearTimeout(typingTimeoutRef.current);
     }
     
-    // Set typing to false after 1.5 seconds of inactivity
+    // Set typing to false after 1 seconds of inactivity
     if (content.trim()) {
       typingTimeoutRef.current = setTimeout(() => {
         setIsTyping(false);
-      }, 1500);
+      }, 1000);
     } else {
       // If input is empty, immediately set typing to false
       setIsTyping(false);
@@ -365,15 +608,29 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   };
 
   const canManageMessage = (message) => {
-    const userRole = getUserRole();
-    if (userRole === 'admin' || userRole === 'moderator') {
-      return true;
-    }
+    // Users can only manage their own messages, regardless of role
     return message.uid === user.uid;
+  };
+
+  const canDeleteMessage = (message) => {
+    // Admins can delete any message, users can only delete their own
+    const userRole = getUserRole();
+    return userRole === 'admin' || message.uid === user.uid;
   };
 
   const handleDeleteClick = (e, messageId) => {
     e.stopPropagation();
+    
+    // Find the message and check if user can delete it
+    const message = messages.find(m => m.id === messageId);
+    if (!message || !canDeleteMessage(message)) {
+      const userRole = getUserRole();
+      if (userRole !== 'admin') {
+        alert('You can only delete your own messages.');
+      }
+      return;
+    }
+    
     const isConfirmed = window.confirm('Are you sure you want to delete this message?');
     if (isConfirmed) {
       deleteDoc(doc(db, `rooms/${selectedRoom.id}/messages`, messageId));
@@ -469,24 +726,37 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
                   </div>
                   <div className="message-content">
                     <div className="message-header">
-                      <span className="message-author">{isSentByUser ? 'You' : message.displayName}</span>
-                      <span className="message-time">{formatTimestamp(message.createdAt)}</span>
+                      <span className="message-author" style={{ color: isSentByUser ? 'var(--text-primary)' : 'var(--telegram-blue)' }}>{isSentByUser ? 'You' : message.displayName}</span>
+                      <span className="message-time" style={{ color: 'var(--text-secondary)' }}>{formatTimestamp(message.createdAt)}</span>
                     </div>
                     
                     {isEditing ? (
-                      <form className="edit-message-form" onSubmit={(e) => { e.preventDefault(); handleEditSave(); }}>
-                        <input
-                          type="text"
-                          value={editText}
-                          onChange={(e) => setEditText(e.target.value)}
+                      <div className="message-bubble editing">
+                        <div
+                          contentEditable="true"
+                          className="edit-message-input"
                           onKeyDown={handleEditKeyDown}
-                          autoFocus
+                          onInput={handleEditInputChange}
+                          onPaste={handleEditInputPaste}
+                          suppressContentEditableWarning={true}
+                          ref={(el) => {
+                            if (el && isEditing) {
+                              el.textContent = editText;
+                              el.focus();
+                              // Move cursor to end
+                              const range = document.createRange();
+                              const sel = window.getSelection();
+                              range.selectNodeContents(el);
+                              range.collapse(false);
+                              sel.removeAllRanges();
+                              sel.addRange(range);
+                            }
+                          }}
                         />
-                        <div className="edit-actions">
-                          <button type="submit">Save</button>
-                          <button type="button" onClick={handleEditCancel}>Cancel</button>
+                        <div className="edit-hint">
+                          Press Enter to save • Esc to cancel
                         </div>
-                      </form>
+                      </div>
                     ) : (
                       <div className="message-bubble">
                         <p>{message.text}</p>
@@ -499,14 +769,18 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
                     </div>
                   </div>
 
-                  {!isEditing && canManageMessage(message) && !isSelectionMode && (
+                  {!isEditing && !isSelectionMode && (canManageMessage(message) || canDeleteMessage(message)) && (
                     <div className="message-actions">
-                      <button onClick={(e) => handleEditClick(e, message)} title="Edit">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg>
-                      </button>
-                      <button onClick={(e) => handleDeleteClick(e, message.id)} title="Delete">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg>
-                      </button>
+                      {canManageMessage(message) && (
+                        <button onClick={(e) => handleEditClick(e, message)} title="Edit">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg>
+                        </button>
+                      )}
+                      {canDeleteMessage(message) && (
+                        <button onClick={(e) => handleDeleteClick(e, message.id)} title="Delete">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -526,13 +800,32 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
                     </svg>
                     {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''} selected
                   </span>
+                  <button onClick={copySelectedMessages} className="copy-selection-btn-status" title="Copy messages (Ctrl+C)">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                      <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                      <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                    </svg>
+                    Copy
+                  </button>
                   <div className="selection-actions">
                     <button onClick={cancelSelection} className="cancel-selection-btn-status">
                       Cancel
                     </button>
-                    <button onClick={deleteSelectedMessages} className="delete-selection-btn-status">
-                      Delete
-                    </button>
+                    {(() => {
+                      // Only show delete button if user can delete at least one selected message
+                      const userRole = getUserRole();
+                      const isAdmin = userRole === 'admin';
+                      const canDeleteAny = selectedMessages.some(id => {
+                        const message = messages.find(m => m.id === id);
+                        return message && canDeleteMessage(message);
+                      });
+                      
+                      return canDeleteAny ? (
+                        <button onClick={deleteSelectedMessages} className="delete-selection-btn-status">
+                          Delete
+                        </button>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               ) : isTyping ? (
