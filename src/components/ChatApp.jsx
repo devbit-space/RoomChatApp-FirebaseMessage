@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { useTheme } from '../context/ThemeContext';
 import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import RoomList from './RoomList';
 import RoomChat from './RoomChat';
 import Settings from './Settings';
@@ -63,9 +63,36 @@ export default function ChatApp() {
         name: room.name,
         timestamp: Date.now()
       }));
+      // Mark room as read when selected
+      markRoomAsRead(room.id);
     } else {
       localStorage.removeItem('selectedRoomId');
       localStorage.removeItem('selectedRoomData');
+    }
+  };
+
+  // Function to mark room as read
+  const markRoomAsRead = async (roomId) => {
+    if (!user) return;
+    
+    try {
+      const roomRef = doc(db, 'rooms', roomId);
+      const roomDoc = await getDoc(roomRef);
+      
+      if (roomDoc.exists()) {
+        const roomData = roomDoc.data();
+        const updatedMembers = roomData.members.map(member => 
+          member.uid === user.uid 
+            ? { ...member, lastReadTimestamp: new Date() }
+            : member
+        );
+
+        await updateDoc(roomRef, {
+          members: updatedMembers
+        });
+      }
+    } catch (error) {
+      console.error('Error marking room as read:', error);
     }
   };
 
@@ -80,7 +107,7 @@ export default function ChatApp() {
     return (
       <div className="chat-app">
         <div className="chat-app-header">
-          <h1>Room Chat App</h1>
+          <h1>free rooms</h1>
           <div className="header-actions">
             {/* User Avatar in Navbar */}
             <div className="navbar-avatar">
@@ -132,7 +159,7 @@ export default function ChatApp() {
   return (
     <div className="chat-app">
       <div className="chat-app-header">
-        <h1 onClick={handleBackToRooms} style={{ cursor: 'pointer' }}>Room Chat App</h1>
+        <h1 onClick={handleBackToRooms} style={{ cursor: 'pointer' }}>free rooms</h1>
         <div className="header-actions">
           <button onClick={toggleTheme} className="theme-toggle-btn" title={isDark ? "Light Mode" : "Dark Mode"}>
             {isDark ? (
@@ -145,18 +172,13 @@ export default function ChatApp() {
               </svg>
             )}
           </button>
-          <button onClick={() => setShowSettings(true)} className="settings-btn" title="Settings">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-              <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-1.57 1.996A1.532 1.532 0 013 7.482c-1.56.38-1.56 2.6 0 2.98a1.532 1.532 0 01.948 2.286c-.836 1.372.734 2.942 1.996 1.57a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.372.836 2.942-.734 1.57-1.996A1.532 1.532 0 0117 12.518c1.56-.38 1.56-2.6 0-2.98a1.532 1.532 0 01-.948-2.286c.836-1.372-.734-2.942-1.996-1.57a1.532 1.532 0 01-2.286-.948zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-            </svg>
-          </button>
           <button 
             className="profile-menu-btn" 
-            onClick={() => setShowProfileSlider(!showProfileSlider)}
+            onClick={() => setShowSettings(true)}
             title="Profile Menu"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-              <path fillRule="evenodd" d="M3 6.75A.75.75 0 013.75 6h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 6.75zM3 12a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 12zm0 5.25a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75a.75.75 0 01-.75-.75z" clipRule="evenodd" />
+              <path fillRule="evenodd" d="M12 6.75a5.25 5.25 0 016.775-5.025.75.75 0 01.313 1.248l-3.32 3.319c.063.475.276.934.641 1.299.365.365.824.578 1.3.64l3.318-3.319a.75.75 0 011.248.313 5.25 5.25 0 01-5.472 6.756c-1.018-.086-1.87.1-2.309.634L7.344 21.3A3.298 3.298 0 112.7 16.657l8.684-7.151c.533-.44.72-1.291.634-2.309A5.342 5.342 0 0112 6.75zM4.117 19.125a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75h-.008a.75.75 0 01-.75-.75v-.008z" clipRule="evenodd" />
             </svg>
           </button>
           {/* User Avatar in Navbar */}
@@ -182,6 +204,7 @@ export default function ChatApp() {
           <RoomList 
             onRoomSelect={handleRoomSelect}
             selectedRoom={selectedRoom}
+            markRoomAsRead={markRoomAsRead}
           />
         )}
       </div>

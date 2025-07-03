@@ -58,6 +58,31 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
 
   const isSelectionMode = selectedMessages.length > 0;
 
+  // Function to mark room as read
+  const markRoomAsRead = async () => {
+    if (!selectedRoom || !user) return;
+    
+    try {
+      const roomRef = doc(db, 'rooms', selectedRoom.id);
+      const roomDoc = await getDoc(roomRef);
+      
+      if (roomDoc.exists()) {
+        const roomData = roomDoc.data();
+        const updatedMembers = roomData.members.map(member => 
+          member.uid === user.uid 
+            ? { ...member, lastReadTimestamp: new Date() }
+            : member
+        );
+
+        await updateDoc(roomRef, {
+          members: updatedMembers
+        });
+      }
+    } catch (error) {
+      console.error('Error marking room as read:', error);
+    }
+  };
+
   useEffect(() => {
     if (!selectedRoom) return;
 
@@ -68,8 +93,20 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setMessages(msgs);
+      
+      // Mark room as read when messages are loaded or updated
+      if (msgs.length > 0) {
+        markRoomAsRead();
+      }
     });
     return unsubscribe;
+  }, [selectedRoom]);
+
+  // Also mark as read when room is first selected
+  useEffect(() => {
+    if (selectedRoom) {
+      markRoomAsRead();
+    }
   }, [selectedRoom]);
 
   useEffect(() => {
@@ -104,9 +141,14 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isSelectionMode) {
+      if (e.key === 'Escape') {
         e.preventDefault();
-        cancelSelection();
+        if (isSelectionMode) {
+          cancelSelection();
+        } else {
+          // If no messages are selected, go back to rooms list
+          onBackToRooms();
+        }
       } else if (e.key === 'Delete' && isSelectionMode) {
         e.preventDefault();
         deleteSelectedMessages();
@@ -116,7 +158,7 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isSelectionMode, selectedMessages]);
+  }, [isSelectionMode, selectedMessages, onBackToRooms]);
 
   // Cleanup typing timeout on unmount or room change
   useEffect(() => {
@@ -281,9 +323,13 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   
   const deleteSelectedMessages = async () => {
     const batch = writeBatch(db);
+    // Only delete messages that belong to the current user
     selectedMessages.forEach(id => {
-      const messageRef = doc(db, `rooms/${selectedRoom.id}/messages`, id);
-      batch.delete(messageRef);
+      const message = messages.find(m => m.id === id);
+      if (message && canManageMessage(message)) {
+        const messageRef = doc(db, `rooms/${selectedRoom.id}/messages`, id);
+        batch.delete(messageRef);
+      }
     });
     await batch.commit();
     setSelectedMessages([]);
@@ -291,6 +337,13 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
 
   const handleEditClick = (e, message) => {
     e.stopPropagation();
+    
+    // Check if user can manage this message
+    if (!canManageMessage(message)) {
+      alert('You can only edit your own messages.');
+      return;
+    }
+    
     setEditingMessage(message);
     setEditText(message.text);
   };
@@ -323,6 +376,18 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     } else if (e.key === 'Escape') {
       handleEditCancel();
     }
+  };
+
+  const handleEditInputChange = (e) => {
+    const content = e.target.textContent || '';
+    setEditText(content);
+  };
+
+  const handleEditInputPaste = (e) => {
+    // Prevent pasting formatted text, only allow plain text
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
   };
 
   const handleMessageInputKeyDown = (e) => {
@@ -365,15 +430,20 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   };
 
   const canManageMessage = (message) => {
-    const userRole = getUserRole();
-    if (userRole === 'admin' || userRole === 'moderator') {
-      return true;
-    }
+    // Users can only manage their own messages, regardless of role
     return message.uid === user.uid;
   };
 
   const handleDeleteClick = (e, messageId) => {
     e.stopPropagation();
+    
+    // Find the message and check if user can manage it
+    const message = messages.find(m => m.id === messageId);
+    if (!message || !canManageMessage(message)) {
+      alert('You can only delete your own messages.');
+      return;
+    }
+    
     const isConfirmed = window.confirm('Are you sure you want to delete this message?');
     if (isConfirmed) {
       deleteDoc(doc(db, `rooms/${selectedRoom.id}/messages`, messageId));
@@ -469,24 +539,37 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
                   </div>
                   <div className="message-content">
                     <div className="message-header">
-                      <span className="message-author">{isSentByUser ? 'You' : message.displayName}</span>
-                      <span className="message-time">{formatTimestamp(message.createdAt)}</span>
+                      <span className="message-author" style={{ color: isSentByUser ? 'var(--text-primary)' : 'var(--telegram-blue)' }}>{isSentByUser ? 'You' : message.displayName}</span>
+                      <span className="message-time" style={{ color: 'var(--text-secondary)' }}>{formatTimestamp(message.createdAt)}</span>
                     </div>
                     
                     {isEditing ? (
-                      <form className="edit-message-form" onSubmit={(e) => { e.preventDefault(); handleEditSave(); }}>
-                        <input
-                          type="text"
-                          value={editText}
-                          onChange={(e) => setEditText(e.target.value)}
+                      <div className="message-bubble editing">
+                        <div
+                          contentEditable="true"
+                          className="edit-message-input"
                           onKeyDown={handleEditKeyDown}
-                          autoFocus
+                          onInput={handleEditInputChange}
+                          onPaste={handleEditInputPaste}
+                          suppressContentEditableWarning={true}
+                          ref={(el) => {
+                            if (el && isEditing) {
+                              el.textContent = editText;
+                              el.focus();
+                              // Move cursor to end
+                              const range = document.createRange();
+                              const sel = window.getSelection();
+                              range.selectNodeContents(el);
+                              range.collapse(false);
+                              sel.removeAllRanges();
+                              sel.addRange(range);
+                            }
+                          }}
                         />
-                        <div className="edit-actions">
-                          <button type="submit">Save</button>
-                          <button type="button" onClick={handleEditCancel}>Cancel</button>
+                        <div className="edit-hint">
+                          Press Enter to save • Esc to cancel
                         </div>
-                      </form>
+                      </div>
                     ) : (
                       <div className="message-bubble">
                         <p>{message.text}</p>

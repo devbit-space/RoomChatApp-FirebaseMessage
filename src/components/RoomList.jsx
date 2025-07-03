@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
-import { collection, addDoc, query, onSnapshot, doc, updateDoc, arrayUnion, deleteDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, query, onSnapshot, doc, updateDoc, arrayUnion, deleteDoc, getDocs, writeBatch, orderBy, where } from 'firebase/firestore';
 import { useSelector } from 'react-redux';
 import './RoomList.css';
 
-export default function RoomList({ onRoomSelect, selectedRoom }) {
+export default function RoomList({ onRoomSelect, selectedRoom, markRoomAsRead }) {
   const [rooms, setRooms] = useState([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDescription, setNewRoomDescription] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [unreadCounts, setUnreadCounts] = useState({});
   const { user } = useSelector((state) => state.auth);
 
   // Component to render member avatars
@@ -48,12 +49,55 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
     );
   };
 
+  // Function to get unread message count for a room
+  const getUnreadCount = async (roomId, lastReadTimestamp) => {
+    if (!lastReadTimestamp) {
+      // If user never read messages in this room, count all messages except own messages
+      const messagesQuery = query(collection(db, `rooms/${roomId}/messages`));
+      const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+        const unreadCount = snapshot.docs.filter(doc => doc.data().uid !== user.uid).length;
+        setUnreadCounts(prev => ({
+          ...prev,
+          [roomId]: unreadCount
+        }));
+      });
+      return unsubscribe;
+    } else {
+      // Count messages after last read timestamp, excluding own messages
+      const messagesQuery = query(
+        collection(db, `rooms/${roomId}/messages`),
+        where('createdAt', '>', lastReadTimestamp),
+        orderBy('createdAt')
+      );
+      const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+        const unreadCount = snapshot.docs.filter(doc => doc.data().uid !== user.uid).length;
+        setUnreadCounts(prev => ({
+          ...prev,
+          [roomId]: unreadCount
+        }));
+      });
+      return unsubscribe;
+    }
+  };
+
   useEffect(() => {
     const q = query(collection(db, 'rooms'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const roomsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setRooms(roomsData);
       setIsLoading(false);
+
+      // Set up unread message listeners for rooms user is a member of
+      const unreadUnsubscribes = [];
+      for (const room of roomsData) {
+        const isMember = room.members?.some(member => member.uid === user.uid);
+        if (isMember) {
+          const member = room.members.find(m => m.uid === user.uid);
+          const lastReadTimestamp = member?.lastReadTimestamp || null;
+          const unreadUnsub = await getUnreadCount(room.id, lastReadTimestamp);
+          unreadUnsubscribes.push(unreadUnsub);
+        }
+      }
 
       // Handle session persistence - auto-select saved room if not already selected
       if (!selectedRoom) {
@@ -77,6 +121,11 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
           }
         }
       }
+
+      // Cleanup function for unread listeners
+      return () => {
+        unreadUnsubscribes.forEach(unsub => unsub());
+      };
     });
     return unsubscribe;
   }, [selectedRoom, onRoomSelect, user.uid]);
@@ -151,7 +200,8 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
       displayName: user.displayName || user.email,
       photoURL: user.photoURL,
       role: 'member',
-      joinedAt: new Date()
+      joinedAt: new Date(),
+      lastReadTimestamp: new Date()
     };
 
     await updateDoc(doc(db, 'rooms', room.id), {
@@ -160,6 +210,8 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
 
     onRoomSelect(room);
   };
+
+
 
   const getUserRole = (room) => {
     const member = room.members?.find(m => m.uid === user.uid);
@@ -232,7 +284,12 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
                 className={`room-item ${isSelected ? 'selected' : ''}`}
               >
                 <div className="room-info">
-                  <h3>{room.name}</h3>
+                  <div className="room-header">
+                    <h3>{room.name}</h3>
+                    {unreadCounts[room.id] > 0 && (
+                      <span className="unread-count">{unreadCounts[room.id]}</span>
+                    )}
+                  </div>
                   <p>{room.description}</p>
                   
                   {/* Member Avatars */}
