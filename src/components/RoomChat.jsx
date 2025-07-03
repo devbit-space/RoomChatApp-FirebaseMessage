@@ -274,6 +274,16 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   const handleMouseEnter = (message) => {
     if (isMouseDown) {
       didDrag.current = true;
+      
+      // Only allow selection if user is admin or it's their own message
+      const userRole = getUserRole();
+      const isAdmin = userRole === 'admin';
+      const isOwnMessage = message.uid === user.uid;
+      
+      if (!isAdmin && !isOwnMessage) {
+        return; // Don't allow selection of other users' messages if not admin
+      }
+      
       setSelectedMessages(prev => {
         if (prev.includes(message.id)) {
           // If message is already selected, deselect it
@@ -291,6 +301,15 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     if (editingMessage) return;
 
     const currentMessageId = message.id;
+    
+    // Only allow selection if user is admin or it's their own message
+    const userRole = getUserRole();
+    const isAdmin = userRole === 'admin';
+    const isOwnMessage = message.uid === user.uid;
+    
+    if (!isAdmin && !isOwnMessage) {
+      return; // Don't allow selection of other users' messages if not admin
+    }
 
     if (e.shiftKey && lastClickedMessageId) {
       const lastIndex = messages.findIndex(m => m.id === lastClickedMessageId);
@@ -299,9 +318,14 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
       if (lastIndex !== -1 && currentIndex !== -1) {
         const start = Math.min(lastIndex, currentIndex);
         const end = Math.max(lastIndex, currentIndex);
-        const rangeIds = messages.slice(start, end + 1).map(m => m.id);
+        const rangeMessages = messages.slice(start, end + 1);
+        
+        // Filter range to only include messages user can select
+        const selectableRangeIds = rangeMessages
+          .filter(msg => isAdmin || msg.uid === user.uid)
+          .map(msg => msg.id);
 
-        const newSelectedMessages = new Set([...selectedMessages, ...rangeIds]);
+        const newSelectedMessages = new Set([...selectedMessages, ...selectableRangeIds]);
         setSelectedMessages(Array.from(newSelectedMessages));
         return; 
       }
@@ -323,10 +347,13 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
   
   const deleteSelectedMessages = async () => {
     const batch = writeBatch(db);
-    // Only delete messages that belong to the current user
+    const userRole = getUserRole();
+    const isAdmin = userRole === 'admin';
+    
+    // Delete messages based on permissions
     selectedMessages.forEach(id => {
       const message = messages.find(m => m.id === id);
-      if (message && canManageMessage(message)) {
+      if (message && canDeleteMessage(message)) {
         const messageRef = doc(db, `rooms/${selectedRoom.id}/messages`, id);
         batch.delete(messageRef);
       }
@@ -434,13 +461,22 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     return message.uid === user.uid;
   };
 
+  const canDeleteMessage = (message) => {
+    // Admins can delete any message, users can only delete their own
+    const userRole = getUserRole();
+    return userRole === 'admin' || message.uid === user.uid;
+  };
+
   const handleDeleteClick = (e, messageId) => {
     e.stopPropagation();
     
-    // Find the message and check if user can manage it
+    // Find the message and check if user can delete it
     const message = messages.find(m => m.id === messageId);
-    if (!message || !canManageMessage(message)) {
-      alert('You can only delete your own messages.');
+    if (!message || !canDeleteMessage(message)) {
+      const userRole = getUserRole();
+      if (userRole !== 'admin') {
+        alert('You can only delete your own messages.');
+      }
       return;
     }
     
@@ -582,14 +618,18 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
                     </div>
                   </div>
 
-                  {!isEditing && canManageMessage(message) && !isSelectionMode && (
+                  {!isEditing && !isSelectionMode && (canManageMessage(message) || canDeleteMessage(message)) && (
                     <div className="message-actions">
-                      <button onClick={(e) => handleEditClick(e, message)} title="Edit">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg>
-                      </button>
-                      <button onClick={(e) => handleDeleteClick(e, message.id)} title="Delete">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg>
-                      </button>
+                      {canManageMessage(message) && (
+                        <button onClick={(e) => handleEditClick(e, message)} title="Edit">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg>
+                        </button>
+                      )}
+                      {canDeleteMessage(message) && (
+                        <button onClick={(e) => handleDeleteClick(e, message.id)} title="Delete">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -613,9 +653,21 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
                     <button onClick={cancelSelection} className="cancel-selection-btn-status">
                       Cancel
                     </button>
-                    <button onClick={deleteSelectedMessages} className="delete-selection-btn-status">
-                      Delete
-                    </button>
+                    {(() => {
+                      // Only show delete button if user can delete at least one selected message
+                      const userRole = getUserRole();
+                      const isAdmin = userRole === 'admin';
+                      const canDeleteAny = selectedMessages.some(id => {
+                        const message = messages.find(m => m.id === id);
+                        return message && canDeleteMessage(message);
+                      });
+                      
+                      return canDeleteAny ? (
+                        <button onClick={deleteSelectedMessages} className="delete-selection-btn-status">
+                          Delete
+                        </button>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               ) : isTyping ? (
