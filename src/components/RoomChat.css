@@ -504,6 +504,32 @@ main {
   background: rgba(255, 68, 68, 0.1);
 }
 
+.copy-selection-btn-status {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 4px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.copy-selection-btn-status:hover {
+  background: var(--background-secondary);
+  border-color: var(--telegram-blue);
+  color: var(--telegram-blue);
+}
+
+.copy-selection-btn-status svg {
+  width: 14px;
+  height: 14px;
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -1546,4 +1572,15 @@ main::-webkit-scrollbar-thumb:hover {
 
 [data-theme="dark"] .modal-content p {
   color: #cccccc;
+}
+
+[data-theme="dark"] .copy-selection-btn-status {
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .copy-selection-btn-status:hover {
+  background: var(--background-tertiary);
+  border-color: var(--telegram-blue);
+  color: var(--telegram-blue);
 } 

@@ -152,13 +152,16 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
       } else if (e.key === 'Delete' && isSelectionMode) {
         e.preventDefault();
         deleteSelectedMessages();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'c' && isSelectionMode) {
+        e.preventDefault();
+        copySelectedMessages();
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isSelectionMode, selectedMessages, onBackToRooms]);
+  }, [isSelectionMode, selectedMessages, onBackToRooms, messages]);
 
   // Cleanup typing timeout on unmount or room change
   useEffect(() => {
@@ -360,6 +363,154 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
     });
     await batch.commit();
     setSelectedMessages([]);
+  };
+
+  const copySelectedMessages = async () => {
+    if (selectedMessages.length === 0) return;
+
+    try {
+      // Get selected messages in chronological order
+      const selectedMessagesData = selectedMessages
+        .map(id => messages.find(m => m.id === id))
+        .filter(msg => msg) // Remove any undefined messages
+        .sort((a, b) => {
+          // Sort by creation time
+          if (!a.createdAt || !b.createdAt) return 0;
+          return a.createdAt.toDate() - b.createdAt.toDate();
+        });
+
+      let clipboardText;
+      
+      if (selectedMessages.length === 1) {
+        // For single message, copy only the message content
+        clipboardText = selectedMessagesData[0]?.text || '';
+      } else {
+        // For multiple messages, use formatted version
+        clipboardText = selectedMessagesData
+          .map(message => {
+            const timestamp = message.createdAt ? formatTimestamp(message.createdAt) : '';
+            const author = message.displayName || 'Unknown';
+            const text = message.text || '';
+            
+            // Format: [Time] Author: Message
+            return `[${timestamp}] ${author}: ${text}`;
+          })
+          .join('\n');
+      }
+
+      // Copy to clipboard
+      await navigator.clipboard.writeText(clipboardText);
+      
+      // Show beautiful success notification
+      showCopyNotification(selectedMessages.length);
+      
+    } catch (error) {
+      console.error('Failed to copy messages to clipboard:', error);
+      
+      // Fallback for older browsers
+      try {
+        const selectedMessagesData = selectedMessages
+          .map(id => messages.find(m => m.id === id))
+          .filter(msg => msg)
+          .sort((a, b) => {
+            if (!a.createdAt || !b.createdAt) return 0;
+            return a.createdAt.toDate() - b.createdAt.toDate();
+          });
+
+        let clipboardText;
+        
+        if (selectedMessages.length === 1) {
+          clipboardText = selectedMessagesData[0]?.text || '';
+        } else {
+          clipboardText = selectedMessagesData
+            .map(message => {
+              const timestamp = message.createdAt ? formatTimestamp(message.createdAt) : '';
+              const author = message.displayName || 'Unknown';
+              const text = message.text || '';
+              return `[${timestamp}] ${author}: ${text}`;
+            })
+            .join('\n');
+        }
+
+        // Create a temporary textarea element for fallback
+        const textArea = document.createElement('textarea');
+        textArea.value = clipboardText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        // Show beautiful success notification
+        showCopyNotification(selectedMessages.length);
+      } catch (fallbackError) {
+        console.error('Clipboard fallback also failed:', fallbackError);
+        showCopyNotification(0, true); // Show error notification
+      }
+    }
+  };
+
+  const showCopyNotification = (messageCount, isError = false) => {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `copy-notification ${isError ? 'error' : 'success'}`;
+    
+    if (isError) {
+      notification.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        <span>Failed to copy messages</span>
+      `;
+    } else {
+      notification.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </svg>
+        <span>${messageCount === 1 ? 'Message copied!' : `${messageCount} messages copied!`}</span>
+      `;
+    }
+    
+    // Add styles
+    Object.assign(notification.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      backgroundColor: isError ? '#ff4757' : '#2ed573',
+      color: 'white',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontSize: '14px',
+      fontWeight: '500',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      zIndex: '10000',
+      transform: 'translateX(100%)',
+      transition: 'transform 0.3s ease',
+      maxWidth: '300px'
+    });
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    requestAnimationFrame(() => {
+      notification.style.transform = 'translateX(0)';
+    });
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
   };
 
   const handleEditClick = (e, message) => {
@@ -649,6 +800,13 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
                     </svg>
                     {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''} selected
                   </span>
+                  <button onClick={copySelectedMessages} className="copy-selection-btn-status" title="Copy messages (Ctrl+C)">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                      <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                      <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                    </svg>
+                    Copy
+                  </button>
                   <div className="selection-actions">
                     <button onClick={cancelSelection} className="cancel-selection-btn-status">
                       Cancel
