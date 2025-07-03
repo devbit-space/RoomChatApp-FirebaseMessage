@@ -22,14 +22,12 @@
 }
 
 .chat-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-bottom: none;
   padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 10;
   position: relative;
   overflow: hidden;
@@ -42,7 +40,6 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(255, 255, 255, 0.05) 100%);
   pointer-events: none;
 }
 
@@ -323,7 +320,7 @@ main {
 
 .message-actions {
   position: absolute;
-  top: 50%;
+  top: 30%;
   transform: translateY(-50%);
   display: flex;
   gap: 4px;
@@ -337,10 +334,6 @@ main {
 
 .message-wrapper.sent .message-actions {
   top: 0;
-}
-
-.message-wrapper.received .message-actions {
-  right: -60px;
 }
 
 .message-wrapper:hover .message-actions {
@@ -426,7 +419,7 @@ main {
   gap: 12px;
   align-items: flex-end;
   flex-shrink: 0;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
 }
 
 /* Message Status Bar */
@@ -927,25 +920,7 @@ main {
   font-weight: 500;
 }
 
-.close-modal-btn {
-  background: transparent;
-  border: none;
-  color: #8b8b8b;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  font-size: 24px;
-  line-height: 1;
-  transition: all 0.2s ease;
-}
-
-.close-modal-btn:hover {
-  background: #f0f0f0;
-  color: #2c2c2c;
-}
-
 .members-list {
-  padding: 8px 0;
   max-height: 60vh;
   overflow-y: auto;
 }
@@ -1262,17 +1237,11 @@ main::-webkit-scrollbar-thumb:hover {
   }
 }
 
-/* Light/Standard theme styles for chat header */
 [data-theme="light"] .chat-header,
 .chat-header {
   background: var(--background-secondary);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-[data-theme="light"] .chat-header::before,
-.chat-header::before {
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%, rgba(255, 255, 255, 0.2) 100%);
+  box-shadow: 0 0px 8px rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="light"] .back-btn,
@@ -1317,15 +1286,8 @@ main::-webkit-scrollbar-thumb:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Dark theme styles for chat header */
 [data-theme="dark"] .chat-header {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   border-bottom: 1px solid #404040;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="dark"] .chat-header::before {
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0%, transparent 50%, rgba(255, 255, 255, 0.02) 100%);
 }
 
 [data-theme="dark"] .back-btn {
@@ -1382,16 +1344,6 @@ main::-webkit-scrollbar-thumb:hover {
 [data-theme="dark"] .members-header h3 {
   color: #ffffff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="dark"] .close-modal-btn {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #e0e0e0;
-}
-
-[data-theme="dark"] .close-modal-btn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
 }
 
 [data-theme="dark"] .members-list {

@@ -882,7 +882,7 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
             <div className="members-modal" onClick={(e) => e.stopPropagation()}>
               <div className="members-header">
                 <h3>Room Members</h3>
-                <button onClick={() => setShowMembers(false)} className="close-modal-btn">×</button>
+                <button onClick={() => setShowMembers(false)} className="close-settings-btn">×</button>
               </div>
               <div className="members-list">
                 {selectedRoom.members?.map((member) => (
