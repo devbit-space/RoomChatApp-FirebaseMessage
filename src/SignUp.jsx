@@ -54,10 +54,19 @@ function SignUp() {
           {error && <div className="error-message">{error}</div>}
           <button 
             type="submit" 
-            className="signup-button"
+            className={`signup-button ${loading ? 'loading' : ''}`}
             disabled={loading}
           >
-            {loading ? 'Signing up...' : 'Sign Up'}
+            {loading ? (
+              <span className="button-loading">
+                <span className="loading-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
+                Signing up...
+              </span>
+            ) : 'Sign Up'}
           </button>
         </form>
       </div>

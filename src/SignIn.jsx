@@ -66,10 +66,19 @@ function SignIn() {
           
           <button 
             type="submit" 
-            className="sign-in-button"
+            className={`sign-in-button ${isLoading ? 'loading' : ''}`}
             disabled={isLoading}
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? (
+              <span className="button-loading">
+                <span className="loading-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
+                Signing in...
+              </span>
+            ) : 'Sign In'}
           </button>
         </form>
 

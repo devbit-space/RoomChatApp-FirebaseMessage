@@ -346,11 +346,11 @@ export default function RoomChat({ selectedRoom, onBackToRooms }) {
       clearTimeout(typingTimeoutRef.current);
     }
     
-    // Set typing to false after 1.5 seconds of inactivity
+    // Set typing to false after 1 seconds of inactivity
     if (content.trim()) {
       typingTimeoutRef.current = setTimeout(() => {
         setIsTyping(false);
-      }, 1500);
+      }, 1000);
     } else {
       // If input is empty, immediately set typing to false
       setIsTyping(false);

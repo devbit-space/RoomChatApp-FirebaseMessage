@@ -9,6 +9,7 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDescription, setNewRoomDescription] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useSelector((state) => state.auth);
 
   // Component to render member avatars
@@ -52,6 +53,7 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const roomsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setRooms(roomsData);
+      setIsLoading(false);
 
       // Handle session persistence - auto-select saved room if not already selected
       if (!selectedRoom) {
@@ -195,7 +197,26 @@ export default function RoomList({ onRoomSelect, selectedRoom }) {
       )}
 
       <div className="rooms-container">
-        {rooms.length === 0 ? (
+        {isLoading ? (
+          // Skeleton loading state
+          Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="room-skeleton">
+              <div className="skeleton-avatar"></div>
+              <div className="skeleton-content">
+                <div className="skeleton-title"></div>
+                <div className="skeleton-description"></div>
+                <div className="skeleton-meta">
+                  <div className="skeleton-avatars">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="skeleton-member-avatar"></div>
+                    ))}
+                  </div>
+                  <div className="skeleton-text-small"></div>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : rooms.length === 0 ? (
           <div className="no-rooms-message">
             <p>No rooms available yet.</p>
             <p>Create the first room to get started!</p>
